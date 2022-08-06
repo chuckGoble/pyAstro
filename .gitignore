@@ -1,5 +1,7 @@
 Ignore the Data Directory
 DATA/**/*
 
+**/**/*.swp
+
 .DS_Store
 

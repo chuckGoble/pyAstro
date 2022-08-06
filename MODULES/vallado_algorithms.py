@@ -8,6 +8,7 @@ from numba.typed import Dict
 from numba import jit, types, njit
 
 ##############################################################################
+PI = m.pi
 IVEC = np.array([1, 0, 0])
 JVEC = np.array([0, 1, 0])
 KVEC = np.array([0, 0, 1])
@@ -80,7 +81,7 @@ def find_c2c3(psi):
 
 # ALGORITHM 02
 @jit(nopython=True)
-def kep_eqn_e(M, ecc):
+def kep_eqn_e(M, ecc, tol=1E-10, degree_flag=True):
     """
     Solve Kepler's problem for an elyptical orbit.
 
@@ -98,25 +99,35 @@ def kep_eqn_e(M, ecc):
     E : float
     E is the eccentric anamoly
     """
-    if -1*m.pi < M < 0 or M > m.pi:
+
+    if degree_flag:
+	M = m.radians(M)
+
+    if -1*PI < M < 0 or M > PI:
         E = M - ecc
+
     else:
         E = M + ecc
+
     err = 1
-    while err > 1E-10:
+    while err > tol:
         num = M - E + (ecc*m.sin(E))
         dom = 1 - (ecc*m.cos(E))
         Enp1 = E + num/dom
 
         err = abs(Enp1 - E)
         E = Enp1
-    return m.degrees(E)
+
+    if degree_flag:
+	E = m.degrees(E)
+
+    return E
 
 
 # ALGORITHM 03
 # TODO: solve the cubic with Cardan's solution on page 1027-1029
 @jit(nopython=True)
-def kep_eqn_p(dt, p, GM):
+def kep_eqn_p(dt, p, GM, tol=1E-10, degree_flag=True):
     """
     Solve Kepler's equation for a parabolic orbit.
 
@@ -137,7 +148,9 @@ def kep_eqn_p(dt, p, GM):
     B : float
     B is the parabolic orbit's parabolic anomaly.
     """
+
     mean_motion = 2*m.sqrt((GM)/(p**3))
+
     # Try Cardan's solution
     # b = -3*np*dt
     # delta = 1 + ((b**2)/4)
@@ -145,15 +158,21 @@ def kep_eqn_p(dt, p, GM):
     # arg2 = (-1*(b/2)) - m.sqrt(delta)
     # B = m.pow(arg1, (1/3)) + m.pow(arg2, (1/3))
     # ----
+
     def f(B, mean_motion, dt): return ((B**3)/3) + B - (mean_motion*dt)
     def df(B): return (B**2) + 1
-    B = m.pi
+
+    B = PI 
     err = 1
-    while err > 1E-10:
+    while err > tol:
         Bnp1 = B - f(B, mean_motion, dt)/df(B)
         err = abs(Bnp1 - B)
         B = Bnp1
-    return m.degrees(B)
+
+    if degree_flag:
+	B = m.degrees(B)
+
+    return B
 
 
 # ALGORITHM 04
