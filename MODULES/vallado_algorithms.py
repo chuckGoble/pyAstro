@@ -177,7 +177,7 @@ def kep_eqn_p(dt, p, GM, tol=1E-10, degree_flag=True):
 
 # ALGORITHM 04
 @jit(nopython=True)
-def kep_eqn_h(M, ecc):
+def kep_eqn_h(M, ecc, tol=1E-10, degree_flag):
     """
     Solve Kepler's equation for a hyperbolic orbit.
 
@@ -194,21 +194,32 @@ def kep_eqn_h(M, ecc):
     H : float
     H is the hyperbolic anomaly for the hyperbolic orbit
     """
-    M = m.radians(M)
-    if (ecc < 1.6) and (((-1*m.pi) < M < 0) or (M > m.pi)):
+
+    if degree_flag:
+    	M = m.radians(M)
+
+    if (ecc < 1.6) and (((-1*PI) < M < 0) or (M > PI)):
         H = M - ecc
-    elif (ecc < 1.6) and not (((-1*m.pi) < M < 0) or (M > m.pi)):
+
+    elif (ecc < 1.6) and not (((-1*PI) < M < 0) or (M > PI)):
         H = M + ecc
-    elif (ecc < 3.6) and (abs(M) > m.pi):
+
+    elif (ecc < 3.6) and (abs(M) > PI):
         H = M - m.copysign(ecc, M)
+
     else:
         H = M/(ecc-1)
+
     err = 1
-    while err > 1E-10:
+    while err > tol:
         Hnp1 = H + (M - (ecc*m.sinh(H)) + H)/((ecc*m.cosh(H)) - 1)
         err = abs(Hnp1 - H)
         H = Hnp1
-    return m.degrees(H)
+
+    if degree_flag:
+	H = m.degrees(H)
+
+    return H
 
 
 # ALGORITHM 05
