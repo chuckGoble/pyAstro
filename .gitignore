@@ -1,7 +1,6 @@
-Ignore the Data Directory
+# Ignore the Data Directory
 DATA/**/*
 
 **/**/*.swp
 
-.DS_Store
-
+/__pycache__/**/*
